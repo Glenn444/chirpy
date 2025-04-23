@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"encoding/json"
 	"time"
+	"strings"
 )
 
 type apiConfig struct {
@@ -96,7 +97,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
         w.Write(errData)
         return
     }
-    
+	stxt := strings.Split(params.Body," ")
+    fmt.Printf("%d\n",len(stxt))
     // Valid case
     respBody := successResponse{
         Valid: true,
@@ -120,7 +122,7 @@ func logRequest(handler http.Handler) http.Handler {
 		duration := time.Since(startTime)
 
 		log.Printf(
-			"%s\t%s\t%s\t%s",
+			"%s\t%s\t%s\t%s\n",
 			r.Method,
 			r.RequestURI,
 			r.RemoteAddr,
