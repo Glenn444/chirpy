@@ -62,7 +62,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
     }
     
     type successResponse struct {
-        Valid bool `json:"valid"`
+        CleanedBody string `json:"cleaned_body"`
     }
     
     decoder := json.NewDecoder(r.Body)
@@ -98,10 +98,20 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 	stxt := strings.Split(params.Body," ")
-    fmt.Printf("%d\n",len(stxt))
+   
     // Valid case
+    for idx,word := range stxt{
+        wordLower := strings.ToLower(word)
+        //fmt.Printf("%t\n",wordLower == "fornax")
+       // fmt.Printf("%s\n",wordLower)
+        if wordLower == "kerfuffle" || wordLower == "sharbert" || wordLower == "fornax"{
+           stxt[idx] = "****"
+        }
+    }
+    formattedStr := strings.Join(stxt," ")
+    // fmt.Printf("string: %s\n",formattedStr)
     respBody := successResponse{
-        Valid: true,
+        CleanedBody: formattedStr,
     }
     
     successData, err := json.Marshal(respBody)
