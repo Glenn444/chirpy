@@ -1,17 +1,26 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"sync/atomic"
-	"encoding/json"
-	"time"
+	"os"
 	"strings"
+	"sync/atomic"
+	"time"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+    
+
+    "github.com/Glenn444/chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+    db *database.Queries
 }
 
 func Health(w http.ResponseWriter,req *http.Request){
@@ -142,7 +151,15 @@ func logRequest(handler http.Handler) http.Handler {
 }
 
 func main() {
-	cfg := &apiConfig{}
+    godotenv.Load()
+    dbURL := os.Getenv("DB_URL")
+    db,err := sql.Open("postgres",dbURL)
+
+    if err != nil{
+        log.Fatal("Error Occurred in db connection")
+    }
+    dbQueries := database.New(db)
+	cfg := &apiConfig{db: dbQueries}
 	
 	mux := http.NewServeMux()
 	//rh := http.RedirectHandler("tobitresearchconsulting.com",307)
