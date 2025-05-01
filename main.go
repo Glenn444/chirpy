@@ -118,7 +118,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
     formattedStr := strings.Join(stxt," ")
-    // fmt.Printf("string: %s\n",formattedStr)
+    fmt.Printf("string: %s\n",formattedStr)
     respBody := successResponse{
         CleanedBody: formattedStr,
     }
