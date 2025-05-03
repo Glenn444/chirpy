@@ -58,9 +58,11 @@ func main() {
 	mux.HandleFunc("GET /api/healthz",Health)
 	mux.HandleFunc("GET /admin/metrics",cfg.MetricsHandler)
 	mux.HandleFunc("POST /admin/reset",cfg.DeleteUsers)
-	mux.HandleFunc("POST /api/validate_chirp",handler.ValidateChirp)
+	// mux.HandleFunc("POST /api/validate_chirp",cfg.CreateChirps)
     mux.HandleFunc("POST /api/users", cfg.CreateUser)
 	mux.HandleFunc("POST /api/chirps", cfg.CreateChirps)
+	mux.HandleFunc("GET /api/chirps", cfg.GetAllChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}",cfg.GetAChirp)
 
 	loggedMux := logRequest(mux)
 

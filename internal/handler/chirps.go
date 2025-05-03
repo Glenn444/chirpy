@@ -76,6 +76,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
         CreatedAt: createdChirp.CreatedAt,
         UpdatedAt: createdChirp.UpdatedAt,
         Body: createdChirp.Body,
+        UserId: createdChirp.UserID,
     }
     
     successData, err := json.Marshal(respBody)
@@ -85,9 +86,103 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
         return
     }
     
+    w.WriteHeader(http.StatusCreated)
+    w.Write(successData)
+}
+
+func (cfg *ApiConfig) GetAllChirps(w http.ResponseWriter, r *http.Request)  {
+     // Set JSON content type header
+     w.Header().Set("Content-Type", "application/json")
+    
+     
+     type successResponse struct {
+        ID uuid.UUID `json:"id"`
+        CreatedAt time.Time `json:"created_at"`
+        UpdatedAt time.Time `json:"updated_at"`
+        Body string `json:"body"`
+        UserId uuid.UUID `json:"user_id"`
+     }
+   
+     var resp []successResponse
+
+     allChirps, err := cfg.DB.GetAllChirps(r.Context())
+     if err != nil{
+         fmt.Printf("Error Creating Chirp %v\n",err)
+     }
+     
+    for _,chirp := range allChirps{
+        newResp := successResponse{
+            ID: chirp.ID,
+            CreatedAt: chirp.CreatedAt,
+            UpdatedAt: chirp.UpdatedAt,
+            Body: chirp.Body,
+            UserId: chirp.UserID,
+        }
+        resp = append(resp,newResp)
+    }
+     
+     
+     successData, err := json.Marshal(resp)
+     if err != nil {
+         log.Printf("Error marshalling JSON: %s", err)
+         w.WriteHeader(http.StatusInternalServerError)
+         return
+     }
+     
+     w.WriteHeader(http.StatusOK)
+     w.Write(successData)
+}
+
+func (cfg *ApiConfig) GetAChirp(w http.ResponseWriter, r *http.Request)  {
+    // Set JSON content type header
+    w.Header().Set("Content-Type", "application/json")
+   
+    paramId, err := uuid.Parse(r.PathValue("chirpID"))
+    if err != nil{
+        fmt.Printf("Error Parsing uuid\n")
+        return
+    }
+  
+    type successResponse struct {
+       ID uuid.UUID `json:"id"`
+       CreatedAt time.Time `json:"created_at"`
+       UpdatedAt time.Time `json:"updated_at"`
+       Body string `json:"body"`
+       UserId uuid.UUID `json:"user_id"`
+    }
+  
+    aChirp, err := cfg.DB.GetChirp(r.Context(),paramId)
+    if err != nil{
+        fmt.Printf("Error Getting Chirp %v\n",err)
+    }
+    if aChirp.ID == uuid.Nil{
+        w.WriteHeader(http.StatusNotFound)
+        return
+    }
+
+    resp := successResponse{
+        ID: aChirp.ID,
+        CreatedAt: aChirp.CreatedAt,
+        UpdatedAt: aChirp.UpdatedAt,
+        Body: aChirp.Body,
+        UserId: aChirp.UserID,
+    }
+    
+   
+    
+    successData, err := json.Marshal(resp)
+    if err != nil {
+        log.Printf("Error marshalling JSON: %s", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+   
+    
     w.WriteHeader(http.StatusOK)
     w.Write(successData)
 }
+
+
 func validateChirp(params parameters) (string, error){
    
     
@@ -105,19 +200,10 @@ func validateChirp(params parameters) (string, error){
            stxt[idx] = "****"
         }
     }
-    type successResponse struct {
-        CleanedBody string `json:"cleaned_body"`
-    }
+
     
     formattedStr := strings.Join(stxt, " ")
-    respBody := successResponse{
-        CleanedBody: formattedStr,
-    }
+   
     
-    successData, err := json.Marshal(respBody)
-    if err != nil {
-        return "", errors.New("error Marshalling respBody")
-    }
-    
-  return string(successData),nil 
+  return formattedStr,nil 
 }
