@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -34,7 +33,7 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 		Subject: userID.String(),
 	});
 
-	signedToken,err := token.SignedString(tokenSecret);
+	signedToken,err := token.SignedString([]byte(tokenSecret));
 	if err != nil{
 		return "",err
 	}
@@ -47,22 +46,23 @@ func ValidateJWT(tokenString,tokenSecret string)(uuid.UUID,error)  {
 	}
 	
 	token,err := jwt.ParseWithClaims(tokenString,&MyCustomClaims{},func(t *jwt.Token) (interface{}, error) {
-		return []byte("AllYourBase"),nil
+		return []byte(tokenSecret),nil
 	});
 
 
 	if err != nil{
-		fmt.Printf("%v",err)
+		//fmt.Printf("%v",err)
 		return uuid.Nil,err
 	}else if claims,ok := token.Claims.(*MyCustomClaims);ok{
-		fmt.Println(claims.RegisteredClaims.Subject)
+		//fmt.Println(claims.RegisteredClaims.Subject)
 		uid,err := uuid.Parse(claims.RegisteredClaims.Subject)
 		if err != nil{
-			fmt.Printf("Error occurred converting string to uuid %v",err)
+			//fmt.Printf("Error occurred converting string to uuid %v",err)
+			return uuid.Nil, fmt.Errorf("invalid UUID in token: %w", err)
 		}
 		return uid,nil
 	}else{
-		log.Fatal("Unknown claims type,cannot proceed")
+		//log.Fatal("Unknown claims type,cannot proceed")
 		return uuid.Nil,errors.New("Unkown Claims")
 	}
 }
