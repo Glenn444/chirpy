@@ -63,6 +63,6 @@ func ValidateJWT(tokenString,tokenSecret string)(uuid.UUID,error)  {
 		return uid,nil
 	}else{
 		//log.Fatal("Unknown claims type,cannot proceed")
-		return uuid.Nil,errors.New("Unkown Claims")
+		return uuid.Nil,errors.New("unkown Claims")
 	}
 }
