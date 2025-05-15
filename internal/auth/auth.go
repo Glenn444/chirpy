@@ -3,6 +3,9 @@ package auth
 import (
 	"errors"
 	"fmt"
+	
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,7 +16,7 @@ import (
 func HashPassword(password string)(string,error)  {
 	hashByte,err := bcrypt.GenerateFromPassword([]byte(password),10);
 	if err != nil{
-		fmt.Printf("Error occured generating HashedPAssword: %v",err);
+	fmt.Printf("Error occured generating HashedPAssword: %v",err);
 		return "",err
 	}
 	return string(hashByte),nil
@@ -26,10 +29,13 @@ return err
 }
 
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error){
+	
+	expiresAt := time.Now().Add(expiresIn * time.Second)
+	
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer: "chirpy",
 		IssuedAt: jwt.NewNumericDate(time.Now()),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
+		ExpiresAt: jwt.NewNumericDate(expiresAt),
 		Subject: userID.String(),
 	});
 
@@ -41,6 +47,7 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 }
 
 func ValidateJWT(tokenString,tokenSecret string)(uuid.UUID,error)  {
+	
 	type MyCustomClaims struct {
 		jwt.RegisteredClaims
 	}
@@ -51,10 +58,9 @@ func ValidateJWT(tokenString,tokenSecret string)(uuid.UUID,error)  {
 
 
 	if err != nil{
-		//fmt.Printf("%v",err)
+		fmt.Printf("Error: %v\n",err)
 		return uuid.Nil,err
 	}else if claims,ok := token.Claims.(*MyCustomClaims);ok{
-		//fmt.Println(claims.RegisteredClaims.Subject)
 		uid,err := uuid.Parse(claims.RegisteredClaims.Subject)
 		if err != nil{
 			//fmt.Printf("Error occurred converting string to uuid %v",err)
@@ -65,4 +71,14 @@ func ValidateJWT(tokenString,tokenSecret string)(uuid.UUID,error)  {
 		//log.Fatal("Unknown claims type,cannot proceed")
 		return uuid.Nil,errors.New("unkown Claims")
 	}
+}
+
+func GetBearerToken(headers http.Header)(string,error)  {
+	authHeader := headers.Get("Authorization");
+	reqToken := strings.TrimPrefix(authHeader,"Bearer ");
+	//log.Printf("token: %v\n",reqToken)
+	if authHeader == "" || reqToken == authHeader{
+		return "",errors.New("authentication header not present")
+	}
+	return reqToken,nil
 }

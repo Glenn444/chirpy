@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Glenn444/chirpy/internal/auth"
 	"github.com/Glenn444/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -21,8 +22,18 @@ type parameters struct {
 func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
     // Set JSON content type header
     w.Header().Set("Content-Type", "application/json")
-    
-   
+    bearer_token,err := auth.GetBearerToken(r.Header)
+    if err != nil{
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Invalid token in request"))
+        return
+    }
+   _, err = auth.ValidateJWT(bearer_token,cfg.Secret)
+   if err != nil{
+    w.WriteHeader(http.StatusUnauthorized)
+    w.Write([]byte("Invalid token"))
+    return
+   }
     
     type errorResponse struct {
         Error string `json:"error"`
@@ -38,7 +49,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
     
     decoder := json.NewDecoder(r.Body)
     params := parameters{}
-    err := decoder.Decode(&params)
+    err = decoder.Decode(&params)
     if err != nil {
         respBody := errorResponse{
             Error: "Something went wrong",
@@ -56,7 +67,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
     data,err := validateChirp(params)
     if err != nil{
         w.WriteHeader(http.StatusInternalServerError)
-        log.Printf("%v\n",err)
+        //log.Printf("%v\n",err)
         return
     }
     chirpParams := database.CreateChirpParams{
@@ -68,6 +79,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
     createdChirp, err := cfg.DB.CreateChirp(r.Context(), chirpParams)
     if err != nil{
         fmt.Printf("Error Creating Chirp %v\n",err)
+        return
     }
     
    

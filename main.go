@@ -42,6 +42,7 @@ func logRequest(handler http.Handler) http.Handler {
 func main() {
     godotenv.Load()
     dbURL := os.Getenv("DB_URL")
+	Jwt_secret := os.Getenv("SECRET")
 	platform := os.Getenv("PLATFORM")
     db,err := sql.Open("postgres",dbURL)
 
@@ -49,7 +50,7 @@ func main() {
         log.Fatal("Error Occurred in db connection")
     }
     dbQueries := database.New(db)
-	cfg := &handler.ApiConfig{DB: dbQueries,Platform: platform}
+	cfg := &handler.ApiConfig{DB: dbQueries,Platform: platform,Secret:Jwt_secret}
 	
 	mux := http.NewServeMux()
 	//rh := http.RedirectHandler("tobitresearchconsulting.com",307)
@@ -59,11 +60,13 @@ func main() {
 	mux.HandleFunc("GET /admin/metrics",cfg.MetricsHandler)
 	mux.HandleFunc("POST /admin/reset",cfg.DeleteUsers)
 	// mux.HandleFunc("POST /api/validate_chirp",cfg.CreateChirps)
-    mux.HandleFunc("POST /api/users", cfg.CreateUser)
+   
 	mux.HandleFunc("POST /api/chirps", cfg.CreateChirps)
 	mux.HandleFunc("GET /api/chirps", cfg.GetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}",cfg.GetAChirp)
-	mux.HandleFunc("POST /api/login", cfg.LoginUser);
+
+	mux.HandleFunc("POST /api/users/register", cfg.CreateUser)
+	mux.HandleFunc("POST /api/users/login", cfg.LoginUser);
 
 	loggedMux := logRequest(mux)
 
@@ -74,6 +77,8 @@ func main() {
 
 	log.Print("Listening...")
 
-	server.ListenAndServe()
+	if err := server.ListenAndServe(); err != nil {
+        log.Fatalf("Server failed to start: %v", err)
+    }
 
 }

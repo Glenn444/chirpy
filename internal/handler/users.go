@@ -73,6 +73,7 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request)  {
 	type parameters struct {
 		Email string `json:"email"`
 		Password string `json:"password"`
+		Expires_in_seconds time.Duration `json:"expires_in_seconds"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -82,12 +83,17 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request)  {
 		fmt.Printf("%v", err)
 		return
 	}
-
+	if params.Expires_in_seconds == time.Duration(0) || params.Expires_in_seconds > 3600{
+		
+		params.Expires_in_seconds = 3600
+	}
+	
 	type respBody struct {
 		ID uuid.UUID `json:"id"`
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 		Email string `json:"email"`
+		Token string `json:"token"`
 	}
 	user, err := cfg.DB.GetUserByEmail(r.Context(), params.Email);
 	if err != nil{
@@ -106,11 +112,19 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request)  {
 		return
 	}
 	
+	token,err := auth.MakeJWT(user.ID,cfg.Secret,params.Expires_in_seconds)
+	if err != nil{
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error generating jwt token"))
+		return 
+	}
 	resp := respBody{
 		ID: user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
+		Token: token,
 	}
 
 	successData, err := json.Marshal(resp)

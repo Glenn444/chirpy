@@ -12,6 +12,7 @@ type ApiConfig struct{
 	FileserverHits atomic.Int32
 	DB *database.Queries
 	Platform string
+	Secret string
 }
 
 //middleware for metrics
