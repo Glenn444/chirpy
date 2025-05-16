@@ -65,8 +65,8 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", cfg.GetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}",cfg.GetAChirp)
 
-	mux.HandleFunc("POST /api/users/register", cfg.CreateUser)
-	mux.HandleFunc("POST /api/users/login", cfg.LoginUser);
+	mux.HandleFunc("POST /api/users", cfg.CreateUser)
+	mux.HandleFunc("POST /api/login", cfg.LoginUser);
 
 	loggedMux := logRequest(mux)
 

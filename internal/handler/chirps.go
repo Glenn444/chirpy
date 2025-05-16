@@ -28,7 +28,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Invalid token in request"))
         return
     }
-   _, err = auth.ValidateJWT(bearer_token,cfg.Secret)
+   userID, err := auth.ValidateJWT(bearer_token,cfg.Secret)
    if err != nil{
     w.WriteHeader(http.StatusUnauthorized)
     w.Write([]byte("Invalid token"))
@@ -44,7 +44,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
        CreatedAt time.Time `json:"created_at"`
        UpdatedAt time.Time `json:"updated_at"`
        Body string `json:"body"`
-       UserId uuid.UUID `json:"user_id"`
+       UserID uuid.UUID `json:"user_id"`
     }
     
     decoder := json.NewDecoder(r.Body)
@@ -72,7 +72,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
     }
     chirpParams := database.CreateChirpParams{
         Body: data,
-        UserID: params.UserId,
+        UserID:userID ,
     }
 
     
@@ -88,7 +88,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
         CreatedAt: createdChirp.CreatedAt,
         UpdatedAt: createdChirp.UpdatedAt,
         Body: createdChirp.Body,
-        UserId: createdChirp.UserID,
+        UserID: createdChirp.UserID,
     }
     
     successData, err := json.Marshal(respBody)
