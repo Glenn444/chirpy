@@ -88,12 +88,14 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request)  {
 		params.Expires_in_seconds = 3600
 	}
 	
+	
 	type respBody struct {
 		ID uuid.UUID `json:"id"`
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 		Email string `json:"email"`
 		Token string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
 	}
 	user, err := cfg.DB.GetUserByEmail(r.Context(), params.Email);
 	if err != nil{
@@ -119,12 +121,19 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request)  {
 		w.Write([]byte("Error generating jwt token"))
 		return 
 	}
+	refresh_token,err := auth.MakeRefreshToken()
+	if err != nil{
+		fmt.Printf("Error generating refreshToken: %v\n",err)
+		return
+	}
+	
 	resp := respBody{
 		ID: user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
 		Token: token,
+		RefreshToken: refresh_token,
 	}
 
 	successData, err := json.Marshal(resp)

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"crypto/rand"
+	"encoding/hex"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -81,4 +83,12 @@ func GetBearerToken(headers http.Header)(string,error)  {
 		return "",errors.New("authentication header not present")
 	}
 	return reqToken,nil
+}
+
+func MakeRefreshToken()  (string,error){
+	refreshToken := make([]byte,32)
+	rand.Read(refreshToken)
+
+	encodedrefreshTokenStr := hex.EncodeToString(refreshToken)
+	return encodedrefreshTokenStr,nil
 }
