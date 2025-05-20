@@ -67,6 +67,8 @@ func main() {
 
 	mux.HandleFunc("POST /api/users", cfg.CreateUser)
 	mux.HandleFunc("POST /api/login", cfg.LoginUser);
+	mux.HandleFunc("POST /api/refresh", cfg.RefreshHandler);
+	mux.HandleFunc("POST /api/revoke", cfg.RevokeHandler);
 
 	loggedMux := logRequest(mux)
 
