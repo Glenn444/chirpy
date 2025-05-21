@@ -45,7 +45,7 @@ RETURNING *;
 
 
 -- name: GetUserFromRefreshToken :one
-SELECT user_id from refresh_tokens where token = $1;
+SELECT user_id from refresh_tokens where token = $1 AND revoked_at IS NULL;
 
 
 -- name: RevokeRefreshToken :exec

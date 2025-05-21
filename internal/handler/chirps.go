@@ -23,6 +23,7 @@ func (cfg *ApiConfig) CreateChirps(w http.ResponseWriter, r *http.Request) {
     // Set JSON content type header
     w.Header().Set("Content-Type", "application/json")
     bearer_token,err := auth.GetBearerToken(r.Header)
+    fmt.Printf("Token Found: %v\n",bearer_token)
     if err != nil{
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Invalid token in request"))

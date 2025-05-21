@@ -128,7 +128,7 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 	expiresAt := time.Now().AddDate(0, 0, 60)
 	newRefreshTokenParams := database.CreateRefreshTokenParams{
-		Token:     token,
+		Token:     refresh_token,
 		UserID:    user.ID,
 		ExpiresAt: expiresAt,
 	}
@@ -188,7 +188,7 @@ func (cfg *ApiConfig) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	refreshToken := headerParts[1]
-
+	fmt.Printf("Token in refreshHandler: %v \n", refreshToken)
 	//Validate refresh Token
 	userId, err := cfg.DB.GetUserFromRefreshToken(r.Context(), refreshToken)
 	if err != nil {
@@ -197,17 +197,17 @@ func (cfg *ApiConfig) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Generate new access token
-	accessToken, err := auth.MakeJWT(userId,cfg.Secret, time.Duration(3600))
-	if err != nil{
-		respondWithError(w,http.StatusInternalServerError,"Couldn't create access token")
+	accessToken, err := auth.MakeJWT(userId, cfg.Secret, time.Duration(3600))
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create access token")
 		return
 	}
-	type RefreshResponse struct{
+	type RefreshResponse struct {
 		Token string `json:"token"`
 	}
 
-	respondWithJSON(w,http.StatusOK,RefreshResponse{
-		Token:accessToken,
+	respondWithJSON(w, http.StatusOK, RefreshResponse{
+		Token: accessToken,
 	})
 }
 
@@ -219,7 +219,7 @@ func (cfg *ApiConfig) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "Authorization header required")
 		return
 	}
-	
+
 	// Check header format
 	headerParts := strings.Split(authHeader, " ")
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
@@ -227,14 +227,14 @@ func (cfg *ApiConfig) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	refreshToken := headerParts[1]
-	
+
 	// Revoke token
-	err := cfg.DB.RevokeRefreshToken(r.Context(),refreshToken)
+	err := cfg.DB.RevokeRefreshToken(r.Context(), refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to revoke token")
 		return
 	}
-	
+
 	// Return 204 No Content
 	w.WriteHeader(http.StatusNoContent)
 }

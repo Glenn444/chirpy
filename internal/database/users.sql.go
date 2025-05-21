@@ -181,7 +181,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserFromRefreshToken = `-- name: GetUserFromRefreshToken :one
-SELECT user_id from refresh_tokens where token = $1
+SELECT user_id from refresh_tokens where token = $1 AND revoked_at IS NULL
 `
 
 func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (uuid.UUID, error) {
