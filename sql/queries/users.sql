@@ -52,3 +52,16 @@ SELECT user_id from refresh_tokens where token = $1 AND revoked_at IS NULL;
 UPDATE refresh_tokens SET revoked_at = NOW(),
 updated_at = NOW()
 WHERE token = $1;
+
+
+-- name: UpdateUserDetails :one
+UPDATE users SET email = $2, hashed_password = $3
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteChirp :exec
+DELETE FROM chirps WHERE id = $1;
+
+-- name: UpgradeUser :exec
+UPDATE users SET is_chirpy_red = true
+WHERE id = $1;

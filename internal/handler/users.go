@@ -32,6 +32,7 @@ func (cfg *ApiConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 		Email     string    `json:"email"`
+		IsChirpyRed bool     `json:"is_chirpy_red"`
 	}
 	hashedPassword, err := auth.HashPassword(params.Password)
 	if err != nil {
@@ -55,6 +56,7 @@ func (cfg *ApiConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
+		IsChirpyRed: user.IsChirpyRed,
 	}
 
 	successData, err := json.Marshal(resp)
@@ -95,6 +97,7 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 		Email        string    `json:"email"`
 		Token        string    `json:"token"`
 		RefreshToken string    `json:"refresh_token"`
+		IsChirpyRed bool `json:"is_chirpy_red"`
 	}
 	user, err := cfg.DB.GetUserByEmail(r.Context(), params.Email)
 	if err != nil {
@@ -143,6 +146,7 @@ func (cfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 		Email:        user.Email,
 		Token:        token,
 		RefreshToken: refresh_token,
+		IsChirpyRed:  user.IsChirpyRed,
 	}
 
 	successData, err := json.Marshal(resp)
@@ -173,6 +177,65 @@ func (cfg *ApiConfig) DeleteUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	// w.Write(successData)
+}
+func (cfg *ApiConfig) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		respondWithError(w, http.StatusUnauthorized, "Authorization Header Required")
+		return
+	}
+
+	//check header format
+	headerParts := strings.Split(authHeader, " ")
+	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+		respondWithError(w, http.StatusUnauthorized, "invalid authorization header format")
+		return
+	}
+	access_token := headerParts[1]
+	userId, err := auth.ValidateJWT(access_token, cfg.Secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid token")
+		return
+	}
+
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err = decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "decoding failed")
+		return
+	}
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "password could not be hashed")
+	}
+	newUserDetails := database.UpdateUserDetailsParams{
+		ID:             userId,
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	}
+	user, err := cfg.DB.UpdateUserDetails(r.Context(), newUserDetails)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "user details not updated")
+	}
+	type SuccessResp struct {
+		UserId    uuid.UUID `json:"user_id"`
+		Email     string    `json:"email"`
+		IsChirpyRed bool     `json:"is_chirpy_red"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
+	respondWithJSON(w, http.StatusOK, SuccessResp{
+		UserId:    user.ID,
+		Email:     user.Email,
+		IsChirpyRed: user.IsChirpyRed,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
 }
 
 func (cfg *ApiConfig) RefreshHandler(w http.ResponseWriter, r *http.Request) {
@@ -237,4 +300,55 @@ func (cfg *ApiConfig) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Return 204 No Content
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (cfg *ApiConfig) UpgradeUserHandler(w http.ResponseWriter, r *http.Request) {
+	// authHeader := r.Header.Get("Authorization")
+	// if authHeader == "" {
+	// 	respondWithError(w, http.StatusUnauthorized, "Authorization Header Required")
+	// 	return
+	// }
+
+	// //check header format
+	// headerParts := strings.Split(authHeader, " ")
+	// if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+	// 	respondWithError(w, http.StatusUnauthorized, "invalid authorization header format")
+	// 	return
+	// }
+	// access_token := headerParts[1]
+	// userId, err := auth.ValidateJWT(access_token, cfg.Secret)
+	// if err != nil {
+	// 	respondWithError(w, http.StatusUnauthorized, "invalid token")
+	// 	return
+	// }
+
+	type UserData struct {
+		UserID uuid.UUID `json:"user_id"`
+	}
+	type parameters struct {
+		Event string   `json:"event"`
+		Data  UserData `json:"data"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "decoding failed")
+		return
+	}
+	if params.Event != "user.upgraded" {
+		respondWithError(w, http.StatusNoContent, "cannot upgrade")
+		return
+	}
+	if params.Event == "user.upgraded" {
+		err := cfg.DB.UpgradeUser(r.Context(), params.Data.UserID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "failed to upgrade user")
+		}
+	}
+
+	type SuccessResp struct {
+		
+	}
+	respondWithJSON(w, http.StatusNoContent, SuccessResp{})
 }

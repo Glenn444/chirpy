@@ -64,11 +64,15 @@ func main() {
 	mux.HandleFunc("POST /api/chirps", cfg.CreateChirps)
 	mux.HandleFunc("GET /api/chirps", cfg.GetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}",cfg.GetAChirp)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", cfg.DeleteChirps);
 
 	mux.HandleFunc("POST /api/users", cfg.CreateUser)
 	mux.HandleFunc("POST /api/login", cfg.LoginUser);
 	mux.HandleFunc("POST /api/refresh", cfg.RefreshHandler);
 	mux.HandleFunc("POST /api/revoke", cfg.RevokeHandler);
+	mux.HandleFunc("PUT /api/users", cfg.UpdateUserHandler);
+	mux.HandleFunc("POST /api/polka/webhooks", cfg.UpgradeUserHandler);
+	
 
 	loggedMux := logRequest(mux)
 
