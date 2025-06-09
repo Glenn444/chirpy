@@ -303,24 +303,6 @@ func (cfg *ApiConfig) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *ApiConfig) UpgradeUserHandler(w http.ResponseWriter, r *http.Request) {
-	// authHeader := r.Header.Get("Authorization")
-	// if authHeader == "" {
-	// 	respondWithError(w, http.StatusUnauthorized, "Authorization Header Required")
-	// 	return
-	// }
-
-	// //check header format
-	// headerParts := strings.Split(authHeader, " ")
-	// if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-	// 	respondWithError(w, http.StatusUnauthorized, "invalid authorization header format")
-	// 	return
-	// }
-	// access_token := headerParts[1]
-	// userId, err := auth.ValidateJWT(access_token, cfg.Secret)
-	// if err != nil {
-	// 	respondWithError(w, http.StatusUnauthorized, "invalid token")
-	// 	return
-	// }
 	apikey,err := auth.GetAPIKey(r.Header)
 	if err != nil{
 		respondWithError(w,http.StatusUnauthorized,"unathorized")

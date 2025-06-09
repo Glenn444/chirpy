@@ -105,6 +105,22 @@ func (cfg *ApiConfig) GetAllChirps(w http.ResponseWriter, r *http.Request) {
 	// Set JSON content type header
 	w.Header().Set("Content-Type", "application/json")
 
+	authorID := r.URL.Query().Get("author_id")
+	fmt.Printf("authorId: %v\n",authorID)
+	if authorID != ""{
+		userId,err := uuid.Parse(authorID)
+		if err != nil{
+			respondWithError(w,http.StatusInternalServerError,"error occurred parsing uuid")
+			return
+		}
+		chirps,err := cfg.DB.GetChirpsByUserId(r.Context(),userId)
+		if err != nil{
+			respondWithError(w,http.StatusInternalServerError,"error occurred getting chirps by UserId")
+			return
+		}
+		respondWithJSON(w,http.StatusOK,chirps)
+		return
+	}
 	type successResponse struct {
 		ID        uuid.UUID `json:"id"`
 		CreatedAt time.Time `json:"created_at"`
