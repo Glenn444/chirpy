@@ -44,13 +44,15 @@ func main() {
     dbURL := os.Getenv("DB_URL")
 	Jwt_secret := os.Getenv("SECRET")
 	platform := os.Getenv("PLATFORM")
-    db,err := sql.Open("postgres",dbURL)
+	apiKey := os.Getenv("POLKA_KEY")
 
+    db,err := sql.Open("postgres",dbURL)
+	
     if err != nil{
         log.Fatal("Error Occurred in db connection")
     }
     dbQueries := database.New(db)
-	cfg := &handler.ApiConfig{DB: dbQueries,Platform: platform,Secret:Jwt_secret}
+	cfg := &handler.ApiConfig{DB: dbQueries,Platform: platform,Secret:Jwt_secret,ApiKey:apiKey}
 	
 	mux := http.NewServeMux()
 	//rh := http.RedirectHandler("tobitresearchconsulting.com",307)

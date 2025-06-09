@@ -321,6 +321,13 @@ func (cfg *ApiConfig) UpgradeUserHandler(w http.ResponseWriter, r *http.Request)
 	// 	respondWithError(w, http.StatusUnauthorized, "invalid token")
 	// 	return
 	// }
+	apikey,err := auth.GetAPIKey(r.Header)
+	if err != nil{
+		respondWithError(w,http.StatusUnauthorized,"unathorized")
+	}
+	if apikey != cfg.ApiKey{
+		respondWithError(w,http.StatusUnauthorized,"unathorized")
+	}
 
 	type UserData struct {
 		UserID uuid.UUID `json:"user_id"`
@@ -331,7 +338,7 @@ func (cfg *ApiConfig) UpgradeUserHandler(w http.ResponseWriter, r *http.Request)
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "decoding failed")
 		return

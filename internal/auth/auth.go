@@ -92,3 +92,17 @@ func MakeRefreshToken()  (string,error){
 	encodedrefreshTokenStr := hex.EncodeToString(refreshToken)
 	return encodedrefreshTokenStr,nil
 }
+
+
+func GetAPIKey(headers http.Header)(string, error){
+	authHeader := headers.Get("Authorization")
+	if authHeader == ""{
+		return "",errors.New("no authorization header")
+	}
+	headerParts := strings.Split(authHeader," ")
+	if len(headerParts) != 2 || headerParts[0] != "ApiKey"{
+		return "",errors.New("invalid authorization header format")
+	}
+	apiKey := headerParts[1]
+	return apiKey,nil
+}

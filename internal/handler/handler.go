@@ -14,6 +14,7 @@ type ApiConfig struct{
 	DB *database.Queries
 	Platform string
 	Secret string
+	ApiKey string
 }
 
 //middleware for metrics
